@@ -933,6 +933,47 @@ async def shopify_create_webhook(params: CreateWebhookInput) -> str:
         return _error(e)
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# GRAPHQL ADMIN API (themes, publications, menus, pages, metafields, files…)
+# ═══════════════════════════════════════════════════════════════════════════
+
+class GraphQLInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    query:     str = Field(..., description="A GraphQL Admin API query or mutation.")
+    variables: Optional[Dict[str, Any]] = Field(default=None, description="GraphQL variables.")
+
+
+@mcp.tool(
+    name="shopify_graphql",
+    annotations={"readOnlyHint": False, "destructiveHint": True, "idempotentHint": False, "openWorldHint": True},
+)
+async def shopify_graphql(params: GraphQLInput) -> str:
+    """Run any Shopify GraphQL Admin API query or mutation (uses SHOPIFY_API_VERSION).
+    Covers everything the REST tools don't: themes and theme files, publishing,
+    menus, pages, metafields, files, translations, markets. Returns the raw
+    response including 'errors', 'userErrors' and query cost."""
+    try:
+        data = await _request("POST", "graphql.json",
+                              body={"query": params.query, "variables": params.variables or {}})
+        return _fmt(data)
+    except Exception as e:
+        return _error(e)
+
+
+@mcp.tool(
+    name="shopify_granted_scopes",
+    annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": True},
+)
+async def shopify_granted_scopes(params: EmptyInput) -> str:
+    """List the access scopes the app actually has on the store."""
+    try:
+        data = await _request("POST", "graphql.json",
+                              body={"query": "{ currentAppInstallation { accessScopes { handle } } }"})
+        return _fmt(data)
+    except Exception as e:
+        return _error(e)
+
+
 # ---------------------------------------------------------------------------
 # Entrypoint
 # ---------------------------------------------------------------------------
