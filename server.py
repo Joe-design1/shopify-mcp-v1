@@ -38,8 +38,11 @@ logger = logging.getLogger("shopify_mcp")
 
 PORT          = int(os.environ.get("PORT", "8000"))
 MCP_TRANSPORT = os.environ.get("MCP_TRANSPORT", "streamable-http")
+# Secret URL path, e.g. /mcp-<32 random characters>. Set it in Railway; it acts as the password.
+MCP_PATH      = os.environ.get("MCP_PATH", "/mcp")
 
-mcp = FastMCP("shopify_mcp", host="0.0.0.0", port=PORT, json_response=True)
+mcp = FastMCP("shopify_mcp", host="0.0.0.0", port=PORT, json_response=True,
+              streamable_http_path=MCP_PATH)
 
 
 # ---------------------------------------------------------------------------
